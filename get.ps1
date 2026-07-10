@@ -23,7 +23,7 @@ foreach ($repo in $repos) {
     Write-Host "[$name] no release yet - skipped"
     continue
   }
-  $asset = $rel.assets | Where-Object { $_.name -like '*.jar' } | Select-Object -First 1
+  $asset = $rel.assets | Where-Object { $_.name -like '*.jar' -and $_.name -notlike '*standalone*' } | Select-Object -First 1
   if (-not $asset) { Write-Host "[$name] release has no jar - skipped"; continue }
   Get-ChildItem $dir -Filter "$name*.jar" -ErrorAction SilentlyContinue | Remove-Item -Force
   $dest = Join-Path $dir "$name-$($rel.tag_name).jar"
