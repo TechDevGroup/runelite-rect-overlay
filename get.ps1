@@ -32,22 +32,25 @@ foreach ($repo in $repos) {
 }
 
 # Ensure the launcher starts the client with --developer-mode (required for sideloading).
-$cfg = Join-Path $env:LOCALAPPDATA 'RuneLite\config.json'
-if (Test-Path $cfg) {
+# The launcher's "Client arguments" live in settings.json (config.json is only the JVM bootstrap).
+$settings = Join-Path $env:LOCALAPPDATA 'RuneLite\settings.json'
+if (Test-Path $settings) {
   try {
-    $j = Get-Content $cfg -Raw | ConvertFrom-Json
-    $cliArgs = @($j.clientArguments)
-    if ($cliArgs -notcontains '--developer-mode') {
-      $j.clientArguments = @($cliArgs + '--developer-mode' | Where-Object { $_ })
-      $j | ConvertTo-Json -Depth 16 | Set-Content $cfg -Encoding UTF8
-      Write-Host "launcher config: added --developer-mode"
+    $j = Get-Content $settings -Raw | ConvertFrom-Json
+    $cur = [string]$j.clientArguments
+    if ($cur -notlike '*--developer-mode*') {
+      $newVal = if ($cur) { "$cur --developer-mode" } else { '--developer-mode' }
+      if ($j.PSObject.Properties.Name -contains 'clientArguments') { $j.clientArguments = $newVal }
+      else { $j | Add-Member -NotePropertyName clientArguments -NotePropertyValue $newVal }
+      $j | ConvertTo-Json -Depth 16 | Set-Content $settings -Encoding UTF8
+      Write-Host "launcher settings: added --developer-mode to clientArguments"
     } else {
-      Write-Host "launcher config: --developer-mode already set"
+      Write-Host "launcher settings: --developer-mode already set"
     }
   } catch {
-    Write-Host "couldn't patch $cfg - add --developer-mode to Client arguments in the launcher settings"
+    Write-Host "couldn't patch $settings - set Client arguments to --developer-mode in the launcher (gear icon)"
   }
 } else {
-  Write-Host "launcher config not found - add --developer-mode to Client arguments in the launcher settings (gear icon on the launcher)"
+  Write-Host "no launcher settings.json yet - open the RuneLite launcher once, or set Client arguments to --developer-mode via its gear icon"
 }
 Write-Host "done. restart RuneLite, then search the plugin list (wrench icon) for the plugin name."
