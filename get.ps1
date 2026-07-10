@@ -7,7 +7,8 @@
 
 $repos = @(
   'TechDevGroup/runelite-blast-furnace-helper',
-  'TechDevGroup/runelite-rect-overlay'
+  'TechDevGroup/runelite-rect-overlay',
+  'TechDevGroup/runelite-guide-chain'
 )
 
 $dir = Join-Path $env:USERPROFILE '.runelite\sideloaded-plugins'
