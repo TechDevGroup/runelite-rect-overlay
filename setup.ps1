@@ -67,3 +67,21 @@ R "== end report =="
 R ""
 R "NEXT: fully close RuneLite, relaunch it DIRECTLY (not via Jagex Launcher), then re-run this"
 R "command once more so the log section shows whether the plugins loaded. Paste the whole report back."
+
+# Sideloading requires assertions (-ea); the official launcher build only scans
+# ~/.runelite/sideloaded-plugins when the client JVM has -ea. --developer-mode alone
+# is NOT enough (it enables dev tools, not the sideload scan). Set it in settings.json.
+$settings = Join-Path $env:LOCALAPPDATA 'RuneLite\settings.json'
+if (Test-Path $settings) {
+  try {
+    $s = Get-Content $settings -Raw | ConvertFrom-Json
+    $ja = @($s.jvmArguments)
+    if ($ja -notcontains '-ea') {
+      $ja = @($ja + '-ea' | Where-Object { $_ })
+      if ($s.PSObject.Properties.Name -contains 'jvmArguments') { $s.jvmArguments = $ja }
+      else { $s | Add-Member -NotePropertyName jvmArguments -NotePropertyValue $ja }
+      $s | ConvertTo-Json -Depth 16 | Set-Content $settings -Encoding UTF8
+      Write-Host "launcher settings: added -ea to jvmArguments (required for sideloading)"
+    } else { Write-Host "launcher settings: -ea already set" }
+  } catch { Write-Host "couldn't patch jvmArguments in $settings - add -ea via the launcher's JVM arguments field" }
+}
